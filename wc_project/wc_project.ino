@@ -13,6 +13,8 @@ int buttonPin = 12;
 int LED = 13;
 int InnerLed = 0;
 
+bool state = false;
+
 void setupWifi() {
   // We start by connecting to a WiFi network
  
@@ -59,16 +61,16 @@ void setup() {
 void postToServer() {
   HTTPClient http;
 
-  String postData = "{\"content\":\"lalala\"}";
-  String url = "http://pp-wc-172508.appspot.com/_ah/api/echo/v1/echo";
+  String stateString = (state == true) ? "0" : "1";
+  String url = "http://sinuous-client-172512.appspot.com/a/" + stateString;
 
   Serial.print("connecting to ");
   Serial.println(url);
 
   http.begin(url);  
-  http.addHeader("Content-Type", "application/json");
+//  http.addHeader("Content-Type", "application/json");
   
-  int httpCode = http.POST(postData);
+  int httpCode = http.GET();
   Serial.print("Response code ");
   Serial.println(httpCode);
 
@@ -77,6 +79,13 @@ void postToServer() {
   Serial.println(payload);
 
   http.end();
+}
+
+void setState(bool newState) {
+  if (newState != state) {
+    state = newState;
+    postToServer();
+  }
 }
 
 void readButtonState() {
@@ -88,12 +97,14 @@ void readButtonState() {
     digitalWrite(LED,HIGH);
     Serial.println("Button ON");
     digitalWrite(InnerLed, LOW);
+    setState(true);
 //    postToServer();
   } else {
     // Otherwise, turn the LED off
     digitalWrite(LED, LOW);
     Serial.println("Button OFF");
     digitalWrite(InnerLed, HIGH);
+    setState(false);
   }  
 }
 
