@@ -10,10 +10,12 @@ const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
 
 int buttonPin = 12;
+int buttonPin2 = 14;
 int LED = 13;
 int InnerLed = 0;
 
-bool state = false;
+bool state1 = false;
+bool state2 = false;
 
 void setupWifi() {
   // We start by connecting to a WiFi network
@@ -39,6 +41,7 @@ void setupWifi() {
 void setupButton() {
    // Define pin #12 as input and activate the internal pull-up resistor
    pinMode(buttonPin, INPUT_PULLUP);
+   pinMode(buttonPin2, INPUT_PULLUP);
 }
 
 void setupLeds() {
@@ -58,17 +61,17 @@ void setup() {
 }
  
 
-void postToServer() {
+void postToServer(int cellNum, int state) {
   HTTPClient http;
 
   String stateString = (state == true) ? "0" : "1";
-  String url = "http://sinuous-client-172512.appspot.com/a/" + stateString;
+  String cellNumString = (cellNum == 1) ? "a" : "b";
+  String url = "http://sinuous-client-172512.appspot.com/" + cellNumString + "/" + stateString;
 
   Serial.print("connecting to ");
   Serial.println(url);
 
   http.begin(url);  
-//  http.addHeader("Content-Type", "application/json");
   
   int httpCode = http.GET();
   Serial.print("Response code ");
@@ -81,10 +84,17 @@ void postToServer() {
   http.end();
 }
 
-void setState(bool newState) {
-  if (newState != state) {
-    state = newState;
-    postToServer();
+void setState1(bool newState) {
+  if (newState != state1) {
+    state1 = newState;
+    postToServer(1, state1);
+  }
+}
+
+void setState2(bool newState) {
+  if (newState != state2) {
+    state2 = newState;
+    postToServer(2, state2);
   }
 }
 
@@ -96,16 +106,35 @@ void readButtonState() {
     // If button pushed, turn LED on
     digitalWrite(LED,HIGH);
     Serial.println("Button ON");
-    digitalWrite(InnerLed, LOW);
-    setState(true);
-//    postToServer();
+    setState1(true);
   } else {
     // Otherwise, turn the LED off
     digitalWrite(LED, LOW);
     Serial.println("Button OFF");
-    digitalWrite(InnerLed, HIGH);
-    setState(false);
+    setState1(false);
   }  
+
+  int buttonValue2 = digitalRead(buttonPin2);
+  if (buttonValue2 == LOW){
+    // If button pushed, turn LED on
+    digitalWrite(LED,HIGH);
+    Serial.println("Button2 ON");
+    setState2(true);
+  } else {
+    // Otherwise, turn the LED off
+    digitalWrite(LED, LOW);
+    Serial.println("Button2 OFF");
+    setState2(false);
+  }  
+
+  if (state1 || state2) {
+    digitalWrite(InnerLed, LOW);
+  } else {
+    digitalWrite(InnerLed, HIGH);
+  }
+
+  
+  
 }
 
 void loop() {
