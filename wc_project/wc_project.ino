@@ -8,12 +8,12 @@
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
- 
-void setup() {
-  Serial.begin(115200);
-//  Serial.setDebugOutput(true);
-  delay(100);
- 
+
+int buttonPin = 12;
+int LED = 13;
+int InnerLed = 0;
+
+void setupWifi() {
   // We start by connecting to a WiFi network
  
   Serial.println();
@@ -33,9 +33,30 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
+void setupButton() {
+   // Define pin #12 as input and activate the internal pull-up resistor
+   pinMode(buttonPin, INPUT_PULLUP);
+}
+
+void setupLeds() {
+  pinMode(InnerLed, OUTPUT);
+  // Define pin #13 as output, for the LED
+//  pinMode(LED, OUTPUT);  
+}
+
+void setup() {
+  Serial.begin(115200);
+//  Serial.setDebugOutput(true);
+  delay(100);
+
+  setupWifi();
+  setupButton();
+  setupLeds();
+}
  
 
-void connect_wc() {
+void postToServer() {
   HTTPClient http;
 
   String postData = "{\"content\":\"lalala\"}";
@@ -58,9 +79,26 @@ void connect_wc() {
   http.end();
 }
 
+void readButtonState() {
+  Serial.println("Reading button state");
+  // Read the value of the input. It can either be 1 or 0
+  int buttonValue = digitalRead(buttonPin);
+  if (buttonValue == LOW){
+    // If button pushed, turn LED on
+    digitalWrite(LED,HIGH);
+    Serial.println("Button ON");
+    digitalWrite(InnerLed, LOW);
+//    postToServer();
+  } else {
+    // Otherwise, turn the LED off
+    digitalWrite(LED, LOW);
+    Serial.println("Button OFF");
+    digitalWrite(InnerLed, HIGH);
+  }  
+}
 
 void loop() {
-  delay(5000);
+  delay(1000);
 
- connect_wc();
+  readButtonState();
 }
